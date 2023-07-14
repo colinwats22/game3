@@ -6,21 +6,23 @@ using TMPro;
 public class PlayerMovement : MonoBehaviour
 {
     [Header("Movement")]
-    public float moveSpeed;
+    public float moveSpeed, runspeed;
 
     public float groundDrag;
 
     public float jumpForce;
     public float jumpCooldown;
+    public float runcooldown;
     public float airMultiplier;
     bool readyToJump;
+    bool readytorun;
 
     [HideInInspector] public float walkSpeed;
     [HideInInspector] public float sprintSpeed;
 
     [Header("Keybinds")]
     public KeyCode jumpKey = KeyCode.Space;
-
+    public KeyCode sprint = KeyCode.LeftShift; 
     [Header("Ground Check")]
     public float playerHeight;
     public LayerMask whatIsGround;
@@ -41,6 +43,7 @@ public class PlayerMovement : MonoBehaviour
         rb.freezeRotation = true;
 
         readyToJump = true;
+        readytorun = true; 
     }
 
     private void Update()
@@ -77,6 +80,13 @@ public class PlayerMovement : MonoBehaviour
 
             Invoke(nameof(ResetJump), jumpCooldown);
         }
+
+        if(Input.GetKey(sprint) && readytorun && grounded)
+        {
+            readytorun = false;
+            run();
+            Invoke(nameof(resetrun), runcooldown); 
+        }
     }
 
     private void MovePlayer()
@@ -112,8 +122,19 @@ public class PlayerMovement : MonoBehaviour
 
         rb.AddForce(transform.up * jumpForce, ForceMode.Impulse);
     }
+    private void run()
+    {
+        moveDirection = orientation.forward * verticalInput + orientation.right * horizontalInput;
+        // on ground
+        if (grounded)
+            rb.AddForce(moveDirection.normalized * runspeed * 10f, ForceMode.Force);
+    }
     private void ResetJump()
     {
         readyToJump = true;
+    }
+    private void resetrun()
+    {
+        readytorun = true;
     }
 }
