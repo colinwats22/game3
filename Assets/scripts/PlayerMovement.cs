@@ -6,7 +6,7 @@ using TMPro;
 public class PlayerMovement : MonoBehaviour
 {
     [Header("Movement")]
-    public float moveSpeed, runspeed;
+    public float moveSpeed, runspeed, crouchspeed;
 
     public float groundDrag;
 
@@ -15,6 +15,10 @@ public class PlayerMovement : MonoBehaviour
     public float runcooldown;
     public float airMultiplier;
     bool readyToJump;
+
+    public float crouchingspeed;
+    public float crouchyscale;
+    public float startyscale; 
     bool readytorun;
 
     [HideInInspector] public float walkSpeed;
@@ -22,7 +26,8 @@ public class PlayerMovement : MonoBehaviour
 
     [Header("Keybinds")]
     public KeyCode jumpKey = KeyCode.Space;
-    public KeyCode sprint = KeyCode.LeftShift; 
+    public KeyCode sprint = KeyCode.LeftShift;
+    public KeyCode crouchkey = KeyCode.LeftControl; 
     [Header("Ground Check")]
     public float playerHeight;
     public LayerMask whatIsGround;
@@ -41,7 +46,7 @@ public class PlayerMovement : MonoBehaviour
     {
         rb = GetComponent<Rigidbody>();
         rb.freezeRotation = true;
-
+        startyscale = transform.localScale.y; 
         readyToJump = true;
         readytorun = true; 
     }
@@ -72,7 +77,7 @@ public class PlayerMovement : MonoBehaviour
         verticalInput = Input.GetAxisRaw("Vertical");
 
         // when to jump
-        if(Input.GetKey(jumpKey) && readyToJump && grounded)
+        if (Input.GetKey(jumpKey) && readyToJump && grounded)
         {
             readyToJump = false;
 
@@ -81,11 +86,23 @@ public class PlayerMovement : MonoBehaviour
             Invoke(nameof(ResetJump), jumpCooldown);
         }
 
-        if(Input.GetKey(sprint) && readytorun && grounded)
+        if (Input.GetKey(sprint) && readytorun && grounded)
         {
             readytorun = false;
             run();
-            Invoke(nameof(resetrun), runcooldown); 
+            Invoke(nameof(resetrun), runcooldown);
+        }
+        //if crouch button pressed and the player isnt sprinting yet they can crouch sprinting should cancel crouch
+        if (Input.GetKeyDown(crouchkey) && readytorun == true)
+        {
+            transform.localScale = new Vector3(transform.localScale.x, crouchyscale, transform.localScale.z);
+            rb.AddForce(Vector3.down * 5f, ForceMode.Impulse);
+            moveSpeed = crouchspeed; 
+        }
+        if (Input.GetKeyUp(crouchkey))
+        {
+            transform.localScale = new Vector3(transform.localScale.x, startyscale, transform.localScale.z);
+            moveSpeed = 4; 
         }
     }
 
