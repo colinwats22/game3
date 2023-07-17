@@ -92,18 +92,25 @@ public class PlayerMovement : MonoBehaviour
             run();
             Invoke(nameof(resetrun), runcooldown);
         }
-        //if crouch button pressed and the player isnt sprinting yet they can crouch sprinting should cancel crouch
-        if (Input.GetKeyDown(crouchkey) && readytorun == true)
+     
+        if (Input.GetKeyDown(crouchkey) && readytorun == true && grounded)
         {
             transform.localScale = new Vector3(transform.localScale.x, crouchyscale, transform.localScale.z);
             rb.AddForce(Vector3.down * 5f, ForceMode.Impulse);
-            moveSpeed = crouchspeed; 
+            moveSpeed = crouchspeed;
+            if (Input.GetKeyDown(sprint))
+                {
+                transform.localScale = new Vector3(transform.localScale.x, crouchyscale, transform.localScale.z);
+                rb.AddForce(Vector3.down * 5f, ForceMode.Impulse);
+                moveSpeed = crouchspeed;
+            }
+
+
         }
-        if (Input.GetKeyUp(crouchkey))
-        {
+       if (Input.GetKeyUp(crouchkey))
+
             transform.localScale = new Vector3(transform.localScale.x, startyscale, transform.localScale.z);
-            moveSpeed = 4; 
-        }
+        moveSpeed = 4;
     }
 
     private void MovePlayer()
@@ -141,12 +148,36 @@ public class PlayerMovement : MonoBehaviour
     }
     private void run()
     {
-        moveDirection = orientation.forward * verticalInput + orientation.right * horizontalInput;
+        if (Input.GetKeyDown(crouchkey))
+            {
+            transform.localScale = new Vector3(transform.localScale.x, startyscale, transform.localScale.z);
+            moveSpeed = 4;
+        }
+else 
+      moveDirection = orientation.forward * verticalInput + orientation.right * horizontalInput;
         // on ground
         if (grounded)
             rb.AddForce(moveDirection.normalized * runspeed * 10f, ForceMode.Force);
     }
-    private void ResetJump()
+    private void crouch()
+    {
+      
+        if (Input.GetKeyDown(sprint))
+        {
+            transform.localScale = new Vector3(transform.localScale.x, crouchyscale, transform.localScale.z);
+            rb.AddForce(Vector3.down * 5f, ForceMode.Impulse);
+            moveSpeed = crouchspeed;
+        }
+            
+      else 
+        {
+
+
+            transform.localScale = new Vector3(transform.localScale.x, startyscale, transform.localScale.z);
+            moveSpeed = 4;
+        }
+    }
+        private void ResetJump()
     {
         readyToJump = true;
     }
