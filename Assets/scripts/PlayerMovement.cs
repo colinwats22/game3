@@ -1,12 +1,13 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using TMPro;
 
 public class PlayerMovement : MonoBehaviour
 {
     [Header("Movement")]
-    public float moveSpeed, runspeed, crouchspeed;
+    public float moveSpeed;
+    public float runspeed;
+    public float crouchspeed;
 
     public float groundDrag;
 
@@ -16,9 +17,11 @@ public class PlayerMovement : MonoBehaviour
     public float airMultiplier;
     bool readyToJump;
 
+    public bool sprinted;
+
     public float crouchingspeed;
     public float crouchyscale;
-    public float startyscale; 
+    public float startyscale;
     bool readytorun;
 
     [HideInInspector] public float walkSpeed;
@@ -27,7 +30,7 @@ public class PlayerMovement : MonoBehaviour
     [Header("Keybinds")]
     public KeyCode jumpKey = KeyCode.Space;
     public KeyCode sprint = KeyCode.LeftShift;
-    public KeyCode crouchkey = KeyCode.LeftControl; 
+    public KeyCode crouchkey = KeyCode.LeftControl;
     [Header("Ground Check")]
     public float playerHeight;
     public LayerMask whatIsGround;
@@ -46,9 +49,13 @@ public class PlayerMovement : MonoBehaviour
     {
         rb = GetComponent<Rigidbody>();
         rb.freezeRotation = true;
-        startyscale = transform.localScale.y; 
+        startyscale = transform.localScale.y;
         readyToJump = true;
-        readytorun = true; 
+        readytorun = true;
+
+        sprinted = true;
+        walkSpeed = moveSpeed;
+        sprintSpeed = runspeed;
     }
 
     private void Update()
@@ -59,11 +66,17 @@ public class PlayerMovement : MonoBehaviour
         MyInput();
         SpeedControl();
 
-        // handle drag
-        if (grounded)
-            rb.drag = groundDrag;
+        // Handle crouching
+        if (sprinted == false && grounded)
+        {
+            transform.localScale = new Vector3(transform.localScale.x, crouchyscale, transform.localScale.z);
+            moveSpeed = crouchspeed;
+        }
         else
-            rb.drag = 0;
+        {
+            transform.localScale = new Vector3(transform.localScale.x, startyscale, transform.localScale.z);
+            moveSpeed = sprinted ? walkSpeed : 0f; // If crouching (sprinted = false), set moveSpeed to 0, otherwise use walkSpeed
+        }
     }
 
     private void FixedUpdate()
@@ -89,28 +102,18 @@ public class PlayerMovement : MonoBehaviour
         if (Input.GetKey(sprint) && readytorun && grounded)
         {
             readytorun = false;
-            run();
-            Invoke(nameof(resetrun), runcooldown);
+            Run();
+            Invoke(nameof(ResetRun), runcooldown);
         }
-     
-        if (Input.GetKeyDown(crouchkey) && readytorun == true && grounded)
+
+        if (Input.GetKeyDown(crouchkey) && grounded)
         {
-            transform.localScale = new Vector3(transform.localScale.x, crouchyscale, transform.localScale.z);
-            rb.AddForce(Vector3.down * 5f, ForceMode.Impulse);
-            moveSpeed = crouchspeed;
-            if (Input.GetKeyDown(sprint))
-                {
-                transform.localScale = new Vector3(transform.localScale.x, crouchyscale, transform.localScale.z);
-                rb.AddForce(Vector3.down * 5f, ForceMode.Impulse);
-                moveSpeed = crouchspeed;
-            }
-
-
+            sprinted = false;
         }
-       if (Input.GetKeyUp(crouchkey))
-
-            transform.localScale = new Vector3(transform.localScale.x, startyscale, transform.localScale.z);
-        moveSpeed = 4;
+        if (Input.GetKeyUp(crouchkey))
+        {
+            sprinted = true;
+        }
     }
 
     private void MovePlayer()
@@ -119,11 +122,11 @@ public class PlayerMovement : MonoBehaviour
         moveDirection = orientation.forward * verticalInput + orientation.right * horizontalInput;
 
         // on ground
-        if(grounded)
+        if (grounded)
             rb.AddForce(moveDirection.normalized * moveSpeed * 10f, ForceMode.Force);
 
         // in air
-        else if(!grounded)
+        else if (!grounded)
             rb.AddForce(moveDirection.normalized * moveSpeed * 10f * airMultiplier, ForceMode.Force);
     }
 
@@ -132,7 +135,7 @@ public class PlayerMovement : MonoBehaviour
         Vector3 flatVel = new Vector3(rb.velocity.x, 0f, rb.velocity.z);
 
         // limit velocity if needed
-        if(flatVel.magnitude > moveSpeed)
+        if (flatVel.magnitude > moveSpeed)
         {
             Vector3 limitedVel = flatVel.normalized * moveSpeed;
             rb.velocity = new Vector3(limitedVel.x, rb.velocity.y, limitedVel.z);
@@ -146,42 +149,25 @@ public class PlayerMovement : MonoBehaviour
 
         rb.AddForce(transform.up * jumpForce, ForceMode.Impulse);
     }
-    private void run()
+
+    private void Run()
     {
-        if (Input.GetKeyDown(crouchkey))
-            {
-            transform.localScale = new Vector3(transform.localScale.x, startyscale, transform.localScale.z);
-            moveSpeed = 4;
-        }
-else 
-      moveDirection = orientation.forward * verticalInput + orientation.right * horizontalInput;
+        // Don't allow running if crouched
+        if (!sprinted)
+            return;
+
+        moveDirection = orientation.forward * verticalInput + orientation.right * horizontalInput;
         // on ground
         if (grounded)
             rb.AddForce(moveDirection.normalized * runspeed * 10f, ForceMode.Force);
     }
-    private void crouch()
-    {
-      
-        if (Input.GetKeyDown(sprint))
-        {
-            transform.localScale = new Vector3(transform.localScale.x, crouchyscale, transform.localScale.z);
-            rb.AddForce(Vector3.down * 5f, ForceMode.Impulse);
-            moveSpeed = crouchspeed;
-        }
-            
-      else 
-        {
 
-
-            transform.localScale = new Vector3(transform.localScale.x, startyscale, transform.localScale.z);
-            moveSpeed = 4;
-        }
-    }
-        private void ResetJump()
+    private void ResetJump()
     {
         readyToJump = true;
     }
-    private void resetrun()
+
+    private void ResetRun()
     {
         readytorun = true;
     }
