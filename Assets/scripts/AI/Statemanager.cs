@@ -5,14 +5,14 @@ using UnityEngine;
 public class Statemanager : MonoBehaviour
 {
 
-    State currentstate;
+  public   State currentstate;
     // Start is called before the first frame update
    
 
     // Update is called once per frame
     void Update()
     {
-        
+        runstatemachine();
     }
 
     private void runstatemachine()
@@ -21,7 +21,12 @@ public class Statemanager : MonoBehaviour
 
         if(nextstate != null)
         {
-
+            //switch to next state
+            switchtonextstate(nextstate);
         }
+    }
+    private void switchtonextstate(State nextstate)
+    {
+        currentstate = nextstate; 
     }
 }
